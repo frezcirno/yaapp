@@ -1,0 +1,12 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.frezcirno.weather.activity.WeatherActivity" >
+
+    <item
+        android:id="@+id/location"
+        android:icon="@drawable/ic_gps_fixed_white_24dp"
+        android:title="@string/location"
+        app:showAsAction="ifRoom"/>
+
+</menu>

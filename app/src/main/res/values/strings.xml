@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="change_city">Change City</string>
+    <string name="enter_zip_code">You can change the city by entering City name or the ZIP Code</string>
+    <string name="could_not_find">Hey there, could not find the city you wanted. Please enter a new one :</string>
+    <string name="city_not_found">City Not Found</string>
+    <string name="city_already_exists">City Already Exists</string>
+    <string name="need_not_add">You Need Not Add This City Again</string>
+    <string name="location">Location</string>
+    <string name="toggle_values">Toggle Values</string>
+
+    <string name="uh_oh">Uh oh. Seems like the city you entered does not exist on the Database. Please Try Again</string>
+    <string name="pick_city">Hey there, let\'s start by picking a city for you</string>
+    <string name="hey_there_condition">Hey there, %s here right now!</string>
+
+    <string name="snow_">Snow : %1$.2f %2$s</string>
+    <string name="humidity">Humidity : %d %%</string>
+    <string name="pressure">Pressure : %.2f hPa</string>
+
+    <string name="wind_">Wind : %1$.2f %2$s</string>
+
+    <string name="wind_blowing_in">Wind Blowing towards %s</string>
+    <string name="north">North</string>
+    <string name="north_east">North-East</string>
+    <string name="north_west">North-West</string>
+    <string name="south">South</string>
+    <string name="south_east">South-East</string>
+    <string name="south_west">South-West</string>
+    <string name="east">East</string>
+    <string name="west">West</string>
+
+    <string name="restart_app">Restart The App</string>
+    <string name="restart_app_content">Please Restart the App to Check With The New Configuration</string>
+
+    <string name="reset">RESET</string>
+
+    <string name="enter_city_first">Enter a City Name First</string>
+    <string name="check_internet">Please check your Internet connection</string>
+    <string name="enable_gps">Enable GPS</string>
+    <string name="enable_gps_content">You need to enable GPS for this function to work</string>
+
+    <string name="please_wait">Please Wait</string>
+    <string name="loading">Loading</string>
+    <string name="settings">Settings</string>
+
+    <string name="daily">DAILY</string>
+    <string name="enable">ENABLE</string>
+
+    <string name="title_activity_first_launch">Enter City</string>
+
+    <!-- Drawer Strings -->
+    <string name="drawer_item_home">Home</string>
+    <string name="drawer_item_graph">Weather Graphs</string>
+    <string name="drawer_item_map">Weather Map</string>
+    <string name="drawer_item_about">About</string>
+    <string name="drawer_item_add_city">Add City</string>
+
+    <string name="rationale_string">Tap Settings, then in Permissions, enable the Location Permission to do this action</string>
+    <string name="show_location_rationale">This Permission Is Required to access Weather Data of your location</string>
+
+    <string name="morning">Morning</string>
+    <string name="night">Night</string>
+    <string name="day">Day</string>
+    <string name="Evening">Evening</string>
+
+    <!-- Target Strings -->
+    <string name="target_search_title">Search for a city</string>
+    <string name="target_search_content">Search for weather data from over 200,000 cities and towns</string>
+    <string name="target_location_content">Tap to check the weather of the location you are at right now. Swipe from the left edge of the screen to the right to see more options</string>
+    <string name="target_refresh_title">Refresh</string>
+    <string name="target_refresh_content">Swipe from the top to refresh</string>
+
+    <string name="no_internet_title">No Internet</string>
+    <string name="no_internet_content">Internet Access Needs To Be Enabled To Display Weather Data</string>
+
+    <!-- Settings Headers -->
+    <string name="pref_temp_header">Temperature</string>
+    <string name="pref_notification_header">Notifications</string>
+    <string name="pref_display_header">Display</string>
+    <string name="pref_other_header">Other Settings</string>
+
+    <!-- Settings Titles -->
+    <string name="pref_units_title">Temperature Unit</string>
+    <string name="pref_enable_notifs_title">Enable Notifications</string>
+    <string name="pref_refresh_title">Refresh Interval</string>
+    <string name="pref_lang_title">Language</string>
+    <string name="pref_owm_key_title">Custom OpenWeatherMap Key</string>
+    <string name="pref_delete_cities_title">Delete Cities</string>
+    <string name="pref_time_format_title">Time Format</string>
+
+    <!-- Settings Summary -->
+    <string name="pref_units_summary">Choose a Preferred Temperature Unit you want to see the temperature in</string>
+    <string name="pref_owm_key_summary">You can enter your own custom OpenWeatherMap API key, and help reduce the load from my API Key.
+        \n\nBEWARE: Entering a wrong API Key may result in unwanted actions. Do this at your own risk</string>
+    <string name="pref_delete_cities_summary">Delete From the extra cities displayed in the app</string>
+    <string name="pref_add_city_content">You can enter a new city and add it to the list of saved cities</string>
+    <string name="pref_time_format_summary">Show time in 24 hour format</string>
+
+    <!-- Bottom Bar Strings -->
+    <string name="bottom_rain">Rain</string>
+    <string name="bottom_wind">Wind</string>
+
+    <!-- Graph Strings -->
+    <string name="g_pressure">Pressure, hPa</string>
+    <string name="g_snow">Snow, mm</string>
+    <string name="unable_fetch">Unable to Fetch Weather Key</string>
+    <string name="unable_fetch_content">There may be some problem in the weather key entered. Reseting to the default one..</string>
+</resources>
