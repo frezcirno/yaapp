@@ -17,15 +17,15 @@ class GlobalActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        cp = Preferences(this)
-        prefs = Prefs(this)
+        val dprefs = Preferences(this)
+        val prefs = Prefs(this)
         super.onResume()
-        if (!cp!!.prefs.getBoolean("first", true)) {
-            prefs!!.setLaunched()
-            prefs!!.city = cp!!.city
+        if (!dprefs.prefs.getBoolean("first", true)) {
+            prefs.setLaunched()
+            prefs.city = dprefs.city
         }
         super.onResume()
-        val intent = if (prefs!!.launched) {
+        val intent = if (prefs.launched) {
             Intent(this@GlobalActivity, WeatherActivity::class.java)
         } else {
             Intent(this@GlobalActivity, FirstLaunch::class.java)
@@ -35,9 +35,6 @@ class GlobalActivity : AppCompatActivity() {
     }
 
     companion object {
-        var cp: Preferences? = null
-        var prefs: Prefs? = null
-
         @JvmField
         var i = 0
     }

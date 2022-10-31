@@ -1,174 +1,152 @@
-package com.frezcirno.weather.preferences;
+package com.frezcirno.weather.preferences
 
-import android.app.AlarmManager;
-import android.content.Context;
-import android.content.SharedPreferences;
-import androidx.preference.PreferenceManager;
+import android.app.AlarmManager
+import android.content.Context
+import android.content.SharedPreferences
+import androidx.preference.PreferenceManager
+import com.frezcirno.weather.model.WeatherInfo
+import com.frezcirno.weather.utils.Constants
 
-import com.frezcirno.weather.model.WeatherInfo;
-import com.frezcirno.weather.utils.Constants;
-
-public class Prefs {
-    private static SharedPreferences prefs;
-
-    public Prefs(Context context) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(context);
+class Prefs(context: Context?) {
+    companion object {
+        private lateinit var prefs: SharedPreferences
     }
 
-    public SharedPreferences getPrefs() {
-        return prefs;
+    init {
+        Companion.prefs = PreferenceManager.getDefaultSharedPreferences(
+            context!!
+        )
     }
 
-    public String getCity() {
-        return prefs.getString(Constants.CITY, null);
+    val prefs: SharedPreferences
+        get() = Companion.prefs
+    var city: String?
+        get() = Companion.prefs.getString(Constants.CITY, null)
+        set(city) {
+            val prefsEditor = Companion.prefs.edit()
+            prefsEditor.putString(Constants.CITY, city)
+            prefsEditor.apply()
+        }
+
+    fun setLaunched() {
+        Companion.prefs.edit().putBoolean(Constants.FIRST, true).apply()
     }
 
-    public void setCity(String city) {
-        SharedPreferences.Editor prefsEditor = prefs.edit();
-        prefsEditor.putString(Constants.CITY, city);
-        prefsEditor.apply();
+    val launched: Boolean
+        get() = Companion.prefs.getBoolean(Constants.FIRST, false)
+    val time: String
+        get() {
+            val time = Companion.prefs.getString(
+                Constants.PREF_REFRESH_INTERVAL,
+                java.lang.Long.toString(AlarmManager.INTERVAL_HOUR / 60000)
+            )!!.toLong() * 60000
+            return java.lang.Long.toString(time)
+        }
+    val language: String
+        get() = Companion.prefs.getString(Constants.PREF_DISPLAY_LANGUAGE, "en")!!
+    var lastCity: String
+        get() = Companion.prefs.getString(Constants.LASTCITY, null)!!
+        set(city) {
+            Companion.prefs.edit().putString(Constants.LASTCITY, city).apply()
+        }
+    var latitude: Float
+        get() = Companion.prefs.getFloat(Constants.LATITUDE, 0f)
+        set(lat) {
+            Companion.prefs.edit().putFloat(Constants.LATITUDE, lat).apply()
+        }
+    var longitude: Float
+        get() = Companion.prefs.getFloat(Constants.LONGITUDE, 0f)
+        set(lon) {
+            Companion.prefs.edit().putFloat(Constants.LONGITUDE, lon).apply()
+        }
+    var units: String?
+        get() = Companion.prefs.getString(Constants.UNITS, Constants.METRIC)
+        set(string) {
+            Companion.prefs.edit().putString(Constants.UNITS, string).apply()
+        }
+    var notifs: Boolean
+        get() = Companion.prefs.getBoolean(Constants.NOTIFICATIONS, false)
+        set(bool) {
+            Companion.prefs.edit().putBoolean(Constants.NOTIFICATIONS, bool).apply()
+        }
+
+    fun setv3TargetShown(bool: Boolean) {
+        Companion.prefs.edit().putBoolean(Constants.V3TUTORIAL, bool).apply()
     }
 
-    public void setLaunched() {
-        prefs.edit().putBoolean(Constants.FIRST, true).apply();
+    fun getv3TargetShown(): Boolean {
+        return Companion.prefs.getBoolean(Constants.V3TUTORIAL, false)
     }
 
-    public boolean getLaunched() {
-        return prefs.getBoolean(Constants.FIRST, false);
+    var weatherKey: String?
+        get() = Companion.prefs.getString(Constants.PREF_OWM_KEY, Constants.OWM_APP_ID)
+        set(str) {
+            Companion.prefs.edit().putString(Constants.PREF_OWM_KEY, str).apply()
+        }
+    var temperature: Double
+        get() = java.lang.Double.longBitsToDouble(
+            Companion.prefs.getLong(
+                Constants.LARGE_WIDGET_TEMPERATURE,
+                0
+            )
+        )
+        set(temp) {
+            Companion.prefs.edit().putLong(
+                Constants.LARGE_WIDGET_TEMPERATURE,
+                java.lang.Double.doubleToLongBits(temp)
+            ).apply()
+        }
+    var pressure: Double
+        get() = java.lang.Double.longBitsToDouble(
+            Companion.prefs.getLong(
+                Constants.LARGE_WIDGET_PRESSURE,
+                0
+            )
+        )
+        set(pressure) {
+            Companion.prefs.edit().putLong(
+                Constants.LARGE_WIDGET_PRESSURE,
+                java.lang.Double.doubleToLongBits(pressure)
+            ).apply()
+        }
+    var humidity: Int
+        get() = Companion.prefs.getInt(Constants.LARGE_WIDGET_HUMIDITY, 0)
+        set(humidity) {
+            Companion.prefs.edit().putInt(Constants.LARGE_WIDGET_HUMIDITY, humidity).apply()
+        }
+    var speed: Float
+        get() = Companion.prefs.getFloat(Constants.LARGE_WIDGET_WIND_SPEED, 0f)
+        set(speed) {
+            Companion.prefs.edit().putFloat(Constants.LARGE_WIDGET_WIND_SPEED, speed).apply()
+        }
+    var icon: Int
+        get() = Companion.prefs.getInt(Constants.LARGE_WIDGET_ICON, 500)
+        set(id) {
+            Companion.prefs.edit().putInt(Constants.LARGE_WIDGET_ICON, id).apply()
+        }
+    var description: String?
+        get() = Companion.prefs.getString(Constants.LARGE_WIDGET_DESCRIPTION, "Moderate Rain")
+        set(description) {
+            Companion.prefs.edit().putString(Constants.LARGE_WIDGET_DESCRIPTION, description)
+                .apply()
+        }
+    var country: String?
+        get() = Companion.prefs.getString(Constants.LARGE_WIDGET_COUNTRY, "IN")
+        set(country) {
+            Companion.prefs.edit().putString(Constants.LARGE_WIDGET_COUNTRY, country).apply()
+        }
+
+    fun saveWeather(weather: WeatherInfo) {
+        temperature = weather.main.temp
+        pressure = weather.main.pressure
+        humidity = weather.main.humidity
+        speed = weather.wind.speed
+        icon = weather.weather[0].id
+        country = weather.sys.country
+        description = weather.weather[0].description
     }
 
-    public void setLastCity(String city) {
-        prefs.edit().putString(Constants.LASTCITY, city).apply();
-    }
+    val isTimeFormat24Hours: Boolean
+        get() = Companion.prefs.getBoolean(Constants.PREF_TIME_FORMAT, false)
 
-    public String getTime() {
-        long time = Long.parseLong(prefs.getString(Constants.PREF_REFRESH_INTERVAL, Long.toString(AlarmManager.INTERVAL_HOUR / 60000))) * 60000;
-        return Long.toString(time);
-    }
-
-    public String getLanguage() {
-        return prefs.getString(Constants.PREF_DISPLAY_LANGUAGE, "en");
-    }
-
-    public String getLastCity() {
-        return prefs.getString(Constants.LASTCITY, null);
-    }
-
-    public void setLatitude(float lat) {
-        prefs.edit().putFloat(Constants.LATITUDE, lat).apply();
-    }
-
-    public float getLatitude() {
-        return prefs.getFloat(Constants.LATITUDE, 0);
-    }
-
-    public void setLongitude(float lon) {
-        prefs.edit().putFloat(Constants.LONGITUDE, lon).apply();
-    }
-
-    public float getLongitude() {
-        return prefs.getFloat(Constants.LONGITUDE, 0);
-    }
-
-    public void setUnits(String string) {
-        prefs.edit().putString(Constants.UNITS, string).apply();
-    }
-
-    public String getUnits() {
-        return prefs.getString(Constants.UNITS, Constants.METRIC);
-    }
-
-    public void setNotifs(Boolean bool) {
-        prefs.edit().putBoolean(Constants.NOTIFICATIONS, bool).apply();
-    }
-
-    public Boolean getNotifs() {
-        return prefs.getBoolean(Constants.NOTIFICATIONS, false);
-    }
-
-    public void setv3TargetShown(boolean bool) {
-        prefs.edit().putBoolean(Constants.V3TUTORIAL, bool).apply();
-    }
-
-    public boolean getv3TargetShown() {
-        return prefs.getBoolean(Constants.V3TUTORIAL, false);
-    }
-
-    public void setWeatherKey(String str) {
-        prefs.edit().putString(Constants.PREF_OWM_KEY, str).apply();
-    }
-
-    public String getWeatherKey() {
-        return prefs.getString(Constants.PREF_OWM_KEY, Constants.OWM_APP_ID);
-    }
-
-    public void setTemperature(double temp) {
-        prefs.edit().putLong(Constants.LARGE_WIDGET_TEMPERATURE, Double.doubleToLongBits(temp)).apply();
-    }
-
-    public double getTemperature() {
-        return Double.longBitsToDouble(prefs.getLong(Constants.LARGE_WIDGET_TEMPERATURE, 0));
-    }
-
-    public void setPressure(double pressure) {
-        prefs.edit().putLong(Constants.LARGE_WIDGET_PRESSURE, Double.doubleToLongBits(pressure)).apply();
-    }
-
-    public double getPressure() {
-        return Double.longBitsToDouble(prefs.getLong(Constants.LARGE_WIDGET_PRESSURE, 0));
-    }
-
-    public void setHumidity(int humidity) {
-        prefs.edit().putInt(Constants.LARGE_WIDGET_HUMIDITY, humidity).apply();
-    }
-
-    public int getHumidity() {
-        return prefs.getInt(Constants.LARGE_WIDGET_HUMIDITY, 0);
-    }
-
-    public void setSpeed(float speed) {
-        prefs.edit().putFloat(Constants.LARGE_WIDGET_WIND_SPEED, speed).apply();
-    }
-
-    public float getSpeed() {
-        return prefs.getFloat(Constants.LARGE_WIDGET_WIND_SPEED, 0);
-    }
-
-    public void setIcon(int id) {
-        prefs.edit().putInt(Constants.LARGE_WIDGET_ICON, id).apply();
-    }
-
-    public int getIcon() {
-        return prefs.getInt(Constants.LARGE_WIDGET_ICON, 500);
-    }
-
-    public void setDescription(String description) {
-        prefs.edit().putString(Constants.LARGE_WIDGET_DESCRIPTION, description).apply();
-    }
-
-    public String getDescription() {
-        return prefs.getString(Constants.LARGE_WIDGET_DESCRIPTION, "Moderate Rain");
-    }
-
-    public void setCountry(String country) {
-        prefs.edit().putString(Constants.LARGE_WIDGET_COUNTRY, country).apply();
-    }
-
-    public String getCountry() {
-        return prefs.getString(Constants.LARGE_WIDGET_COUNTRY, "IN");
-    }
-
-    public void saveWeather(WeatherInfo weather) {
-        setTemperature(weather.getMain().getTemp());
-        setPressure(weather.getMain().getPressure());
-        setHumidity(weather.getMain().getHumidity());
-        setSpeed(weather.getWind().getSpeed());
-        setIcon(weather.getWeather().get(0).getId());
-        setCountry(weather.getSys().getCountry());
-        setDescription(weather.getWeather().get(0).getDescription());
-    }
-
-    public boolean isTimeFormat24Hours() {
-        return prefs.getBoolean(Constants.PREF_TIME_FORMAT, false);
-    }
 }

@@ -2,6 +2,7 @@
     <PreferenceCategory android:title="@string/pref_temp_header">
 
         <ListPreference
+            android:enabled="true"
             android:defaultValue="metric"
             android:dialogTitle="@string/pref_units_summary"
             android:entries="@array/pref_unit_keys"
@@ -15,11 +16,13 @@
     <PreferenceCategory android:title="@string/pref_notification_header">
 
         <SwitchPreference
+            android:enabled="true"
             android:defaultValue="false"
             android:key="@string/pref_enable_notifs"
             android:title="@string/pref_enable_notifs_title" />
 
         <ListPreference
+            android:enabled="true"
             android:defaultValue="60"
             android:dependency="@string/pref_enable_notifs"
             android:dialogTitle="@string/pref_refresh_title"
@@ -31,6 +34,7 @@
 
     <PreferenceCategory android:title="@string/pref_display_header">
         <ListPreference
+            android:enabled="true"
             android:defaultValue=""
             android:dialogTitle="@string/pref_lang_title"
             android:entries="@array/language_entries"
@@ -39,6 +43,7 @@
             android:title="@string/pref_lang_title" />
 
         <SwitchPreference
+            android:enabled="true"
             android:defaultValue="false"
             android:dialogTitle="@string/pref_time_format_title"
             android:key="@string/pref_time_format"
@@ -48,11 +53,13 @@
 
     <PreferenceCategory android:title="@string/pref_other_header">
         <Preference
+            android:enabled="true"
             android:key="@string/pref_delete_cities"
             android:summary="@string/pref_delete_cities_summary"
             android:title="@string/pref_delete_cities_title" />
 
         <Preference
+            android:enabled="true"
             android:key="@string/pref_key"
             android:summary="@string/pref_owm_key_summary"
             android:title="@string/pref_owm_key_title" />

@@ -70,7 +70,7 @@ public class Utils {
         Bitmap bitmap = Bitmap.createBitmap(256, 256, Bitmap.Config.ARGB_4444);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
-        Typeface weatherFont = Typeface.createFromAsset(context.getAssets(), "font/weather-icons-v2.0.10.ttf");
+        Typeface weatherFont = Typeface.createFromAsset(context.getAssets(), "fonts/weather.ttf");
         paint.setAntiAlias(true);
         paint.setSubpixelText(true);
         paint.setTypeface(weatherFont);

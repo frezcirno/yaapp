@@ -1,5 +1,6 @@
 package com.frezcirno.weather.activity
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -15,8 +16,8 @@ import com.afollestad.materialdialogs.callbacks.onDismiss
 import com.afollestad.materialdialogs.input.input
 import com.frezcirno.weather.BuildConfig
 import com.frezcirno.weather.R
-import com.frezcirno.weather.activity.settings.SettingsActivity
 import com.frezcirno.weather.app.MyContextWrapper
+import com.frezcirno.weather.databinding.ActivityWeatherBinding
 import com.frezcirno.weather.fragment.GraphsFragment
 import com.frezcirno.weather.fragment.MapsFragment
 import com.frezcirno.weather.fragment.WeatherFragment
@@ -28,7 +29,6 @@ import com.frezcirno.weather.preferences.DBHelper
 import com.frezcirno.weather.preferences.Prefs
 import com.frezcirno.weather.service.NotificationService
 import com.frezcirno.weather.utils.Constants
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.mikepenz.google_material_typeface_library.GoogleMaterial
 import com.mikepenz.iconics.IconicsDrawable
 import com.mikepenz.materialdrawer.AccountHeaderBuilder
@@ -46,15 +46,16 @@ import java.util.concurrent.ExecutionException
 
 class WeatherActivity : AppCompatActivity() {
     lateinit var preferences: Prefs
-    var wf: WeatherFragment = WeatherFragment()
-    var gf: GraphsFragment = GraphsFragment()
+    var wf = WeatherFragment()
+    var gf = GraphsFragment()
+
+    lateinit var binding: ActivityWeatherBinding
 
     //MapsFragment mf;
     var toolbar: Toolbar? = null
     var drawer: Drawer? = null
     var mManager: NotificationManagerCompat? = null
     var handler: Handler = Handler()
-    lateinit var fab: FloatingActionButton
     var dbHelper: DBHelper? = null
     var f: Fragment? = null
     var mode = 0
@@ -102,21 +103,21 @@ class WeatherActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityWeatherBinding.inflate(layoutInflater)
         setContentView(R.layout.activity_weather)
         preferences = Prefs(this)
-        fab = findViewById(R.id.fab)
         i("Activity", WeatherActivity::class.java.simpleName)
         mManager = NotificationManagerCompat.from(this)
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
-        fab.setOnClickListener { showInputDialog() }
+        binding.fab.setOnClickListener { showInputDialog() }
+        binding.fab.show()
         val intent = intent
-        fab.show()
         val bundle = Bundle()
         bundle.putInt("mode", intent.getIntExtra(Constants.MODE, 0))
-        wf.arguments = bundle
         //mf = new MapsFragment();
         dbHelper = DBHelper(this)
+        wf.arguments = bundle
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment, wf)
             .commit()
@@ -124,12 +125,13 @@ class WeatherActivity : AppCompatActivity() {
         NotificationService.enqueueWork(this, Intent(this, WeatherActivity::class.java))
     }
 
+    @SuppressLint("CheckResult")
     private fun showInputDialog() {
         MaterialDialog(this).show {
             title(R.string.change_city)
             message(R.string.enter_zip_code)
-            positiveButton { fab.show() }
-            onDismiss { fab.show() }
+            positiveButton { binding.fab.show() }
+            onDismiss { binding.fab.show() }
             input { dialog, text ->
                 changeCity(text.toString())
             }
@@ -139,12 +141,13 @@ class WeatherActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("CheckResult")
     private fun showCityDialog() {
         MaterialDialog(this).show {
             title(R.string.drawer_item_add_city)
             message(R.string.pref_add_city_content)
-            positiveButton { fab.show() }
-            onDismiss { fab.show() }
+            positiveButton { binding.fab.show() }
+            onDismiss { binding.fab.show() }
             input { dialog, text ->
                 checkForCity(text.toString())
             }
@@ -231,14 +234,14 @@ class WeatherActivity : AppCompatActivity() {
         }
     }
 
-    fun changeCity(city: String?) {
+    private fun changeCity(city: String?) {
         val wf = supportFragmentManager
             .findFragmentById(R.id.fragment) as WeatherFragment?
         wf!!.changeCity(city)
         Prefs(this).city = city
     }
 
-    fun initDrawer() {
+    private fun initDrawer() {
         val profile: IProfile<*> = ProfileDrawerItem().withName(getString(R.string.app_name))
             .withEmail("Version : " + BuildConfig.VERSION_NAME)
             .withIcon(R.mipmap.ic_launcher_x)
@@ -330,22 +333,6 @@ class WeatherActivity : AppCompatActivity() {
                 }
             })
             .withSelectable(false)
-        val item8 = SecondaryDrawerItem().withName(R.string.drawer_item_about)
-            .withIcon(
-                IconicsDrawable(this)
-                    .icon(GoogleMaterial.Icon.gmd_info)
-            )
-            .withSelectable(false)
-            .withOnDrawerItemClickListener(object : Drawer.OnDrawerItemClickListener {
-                override fun onItemClick(
-                    view: View,
-                    position: Int,
-                    drawerItem: IDrawerItem<*, *>?
-                ): Boolean {
-                    startActivity(Intent(this@WeatherActivity, AboutActivity::class.java))
-                    return true
-                }
-            })
         val item9 = SecondaryDrawerItem().withName(R.string.settings)
             .withIcon(
                 IconicsDrawable(this)
@@ -365,7 +352,7 @@ class WeatherActivity : AppCompatActivity() {
         val drawerBuilder = DrawerBuilder()
         drawerBuilder
             .withActivity(this)
-            .withToolbar((toolbar)!!)
+            .withToolbar(toolbar!!)
             .withTranslucentStatusBar(true)
             .withAccountHeader(headerResult)
             .withActionBarDrawerToggleAnimated(true)
@@ -377,7 +364,6 @@ class WeatherActivity : AppCompatActivity() {
                 item4
             )
             .addStickyDrawerItems(
-                item8,
                 item9
             )
         val cities = dbHelper!!.cities

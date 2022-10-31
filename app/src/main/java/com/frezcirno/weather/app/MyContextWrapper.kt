@@ -3,7 +3,6 @@ package com.frezcirno.weather.app
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.res.Configuration
-import com.frezcirno.weather.app.MyContextWrapper
 import java.util.*
 
 class MyContextWrapper(base: Context?) : ContextWrapper(base) {
