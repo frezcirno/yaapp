@@ -30,16 +30,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.AboutActivity"
-            android:configChanges="locale"
-            android:label="About"
-            android:screenOrientation="portrait"
-            android:parentActivityName=".activity.WeatherActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.frezcirno.weather.activity.WeatherActivity" />
-        </activity>
-        <activity
             android:name=".activity.WeatherActivity"
             android:configChanges="locale"
             android:screenOrientation="portrait"
@@ -52,7 +42,7 @@
             android:resizeableActivity="false"
              />
         <activity
-            android:name=".activity.settings.SettingsActivity"
+            android:name=".activity.SettingsActivity"
             android:configChanges="locale"
             android:screenOrientation="portrait"
             android:label="@string/settings"
