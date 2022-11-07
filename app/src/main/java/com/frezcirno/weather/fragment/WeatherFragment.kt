@@ -8,10 +8,12 @@ import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper.getMainLooper
 import android.provider.Settings
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.RelativeSizeSpan
+import android.util.Log
 import android.view.*
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -21,24 +23,23 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
-import com.frezcirno.weather.GlobalActivity
 import com.frezcirno.weather.R
-import com.frezcirno.weather.activity.FirstLaunch
+import com.frezcirno.weather.activity.FirstLaunchActivity
+import com.frezcirno.weather.activity.GlobalActivity
 import com.frezcirno.weather.activity.WeatherActivity
 import com.frezcirno.weather.databinding.FragmentWeatherBinding
 import com.frezcirno.weather.fragment.WeatherFragment.HorizontalAdapter.MyViewHolder
-import com.frezcirno.weather.internet.FetchWeather
 import com.frezcirno.weather.internet.isNetworkAvailable
-import com.frezcirno.weather.model.Info
-import com.frezcirno.weather.model.Log.e
-import com.frezcirno.weather.model.Snack
-import com.frezcirno.weather.model.WeatherFort.WeatherList
+import com.frezcirno.weather.model.DataResult
+import com.frezcirno.weather.model.ForecastDay
 import com.frezcirno.weather.permissions.GPSTracker
 import com.frezcirno.weather.permissions.Permissions
-import com.frezcirno.weather.preferences.Prefs
-import com.frezcirno.weather.service.NotificationService
+import com.frezcirno.weather.preferences.MyPreference
 import com.frezcirno.weather.utils.Constants
+import com.frezcirno.weather.utils.FetchWeather
+import com.frezcirno.weather.utils.Snack
 import com.frezcirno.weather.utils.Utils
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt
 import java.text.DateFormat
@@ -48,27 +49,24 @@ import java.util.concurrent.ExecutionException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+
 class WeatherFragment : Fragment() {
-    lateinit var weatherFont: Typeface
-
     private lateinit var binding: FragmentWeatherBinding
+    private lateinit var handler: Handler
+    private lateinit var materialDialog: MaterialDialog
+    private lateinit var horizontalRecyclerView: RecyclerView
+    private lateinit var rootView: View
+    private lateinit var fab: FloatingActionButton
+    lateinit var weatherFont: Typeface
+    lateinit var myPreference: MyPreference
 
-    var horizontalLayoutManager: LinearLayoutManager? = null
-    private var tc = 0.0
-    var handler: Handler = Handler()
-
-    var json: Info? = null
-    var citys: String? = null
-    lateinit var pd: MaterialDialog
-    lateinit var wt: FetchWeather
-    lateinit var prefs: Prefs
+    var json: DataResult? = null
+    var city: String? = null
     var gps: GPSTracker? = null
-    lateinit var rootView: View
     var permission: Permissions? = null
-    lateinit var horizontalRecyclerView: RecyclerView
 
-    fun setCity(city: String?): WeatherFragment {
-        this.citys = city
+    fun setCity(city: String): WeatherFragment {
+        this.city = city
         return this
     }
 
@@ -77,38 +75,41 @@ class WeatherFragment : Fragment() {
     ): View {
         binding = FragmentWeatherBinding.inflate(inflater, container, false)
         rootView = binding.root
-        pd = MaterialDialog(requireContext())
-            .title(R.string.please_wait)
-            .message(R.string.loading)
-            .cancelable(false)
-            .cancelOnTouchOutside(false)
+        handler = Handler(getMainLooper())
+
+        materialDialog =
+            MaterialDialog(requireContext()).title(R.string.please_wait).message(R.string.loading)
+                .cancelable(false).cancelOnTouchOutside(false)
 //            .progress()
+
         setHasOptionsMenu(true)
-        prefs = Prefs(requireContext())
+
+        myPreference = MyPreference(requireContext())
         weatherFont = Typeface.createFromAsset(requireContext().assets, "fonts/weather.ttf")
-        val bundle = arguments
-        val mode = bundle?.getInt(Constants.MODE)
-        if (mode == 0)
-            updateWeatherData(prefs.city, null, null)
-        else
-            updateWeatherData(null, prefs.latitude.toString(), prefs.longitude.toString())
+
+        val mode = arguments?.getInt(Constants.MODE)
+        if (mode == 0) {
+            updateWeatherData(myPreference.city, null, null)
+        } else {
+            updateWeatherData(
+                null, myPreference.latitude.toString(), myPreference.longitude.toString()
+            )
+        }
+
         binding.cityField.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
         binding.updatedField.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
         binding.humidityView.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
         binding.sunriseIcon.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
         binding.sunriseIcon.typeface = weatherFont
@@ -118,8 +119,7 @@ class WeatherFragment : Fragment() {
         binding.sunsetIcon.text = requireActivity().getString(R.string.sunset_icon)
         binding.humidityIcon.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
         binding.humidityIcon.typeface = weatherFont
@@ -130,55 +130,60 @@ class WeatherFragment : Fragment() {
         )
         binding.swipe.setOnRefreshListener {
             handler.post {
-                changeCity(prefs.city)
+                changeCity(myPreference.city)
                 binding.swipe.isRefreshing = false
             }
         }
         horizontalRecyclerView = rootView.findViewById(R.id.horizontal_recycler_view)
-        horizontalLayoutManager =
+
+        fab = (activity as WeatherActivity).findViewById(R.id.fab)
+
+        val horizontalLayoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         horizontalRecyclerView.layoutManager = horizontalLayoutManager
-        horizontalRecyclerView.addOnScrollListener(object :
-            RecyclerView.OnScrollListener() {
+        horizontalRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-//                if (horizontalLayoutManager!!.findLastVisibleItemPosition() == 9 || citys != null) fab.hide() else fab.show()
+                if (horizontalLayoutManager.findLastVisibleItemPosition() == 9 || city != null)
+                    fab.hide()
+                else
+                    fab.show()
             }
         })
         binding.directionView.typeface = weatherFont
         binding.directionView.setTextColor(
-            ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
-            )
+            ContextCompat.getColor(requireContext(), R.color.textColor)
         )
+
         binding.dailyView.text = getString(R.string.daily)
         binding.dailyView.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
+
         binding.sunriseView.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
         binding.sunsetView.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
-        binding.button1.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
-        pd.show()
+
+        binding.iconButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
+        materialDialog.show()
         horizontalRecyclerView.setBackgroundColor(resources.getColor(R.color.colorPrimary))
         binding.weatherIcon11.typeface = weatherFont
         binding.weatherIcon11.setTextColor(
             ContextCompat.getColor(
-                requireContext(),
-                R.color.textColor
+                requireContext(), R.color.textColor
             )
         )
-        //        if (citys == null)
-//            ((WeatherActivity) requireActivity()).showFab();
-//        else
-//            ((WeatherActivity) requireActivity()).hideFab();
+
+        if (city == null)
+            (requireActivity() as WeatherActivity).showFab()
+        else
+            (requireActivity() as WeatherActivity).hideFab()
+
         return rootView
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (citys == null) requireActivity().menuInflater.inflate(R.menu.menu_weather, menu)
+        if (city == null) requireActivity().menuInflater.inflate(R.menu.menu_weather, menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -199,8 +204,8 @@ class WeatherFragment : Fragment() {
             if (!isNetworkAvailable(requireContext())) {
                 showNoInternet()
             } else {
-                pd.show()
-                updateWeatherData(prefs.city, null, null)
+                materialDialog.show()
+                updateWeatherData(myPreference.city, null, null)
             }
         }
     }
@@ -211,85 +216,69 @@ class WeatherFragment : Fragment() {
     }
 
     private fun updateWeatherData(city: String?, lat: String?, lon: String?) {
-        wt = FetchWeather(requireContext())
-        if (this.citys == null) handler.postDelayed({
-//            fabProgressCircle.show();
-        }, 50)
-        object : Thread() {
-            override fun run() {
-                try {
-                    if (lat == null && lon == null) {
-                        json = wt.execute(if (citys != null) citys else city).get()
-                    } else if (city == null) {
-                        json = wt.execute(lat, lon).get()
-                    }
-                } catch (iex: InterruptedException) {
-                    e("InterruptedException", "iex")
-                } catch (eex: ExecutionException) {
-                    e("ExecutionException", "eex")
+        val fetchWeather = FetchWeather(requireContext())
+        Thread {
+            try {
+                if (lat == null && lon == null) {
+                    json = fetchWeather.execute(if (this.city != null) this.city else city).get()
+                } else if (city == null) {
+                    json = fetchWeather.execute(lat, lon).get()
                 }
-                if (pd.isShowing) pd.dismiss()
-                if (json == null) {
-                    prefs.city = prefs.lastCity
-                    handler.post {
-                        GlobalActivity.i = 1
-                        if (!prefs.launched) {
-                            firstStart()
+            } catch (iex: InterruptedException) {
+                Log.e("InterruptedException", "iex")
+            } catch (eex: ExecutionException) {
+                Log.e("ExecutionException", "eex")
+            }
+            if (materialDialog.isShowing) materialDialog.dismiss()
+            if (json == null) {
+                myPreference.city = myPreference.lastCity
+                handler.post {
+                    GlobalActivity.i = 1
+                    if (!myPreference.launched) {
+                        firstStart()
+                    } else {
+                        if (!isNetworkAvailable(requireContext())) {
+                            showNoInternet()
                         } else {
-                            //                                if (citys == null)
-                            //                                    fabProgressCircle.hide();
-                            if (!isNetworkAvailable(requireContext())) {
-                                showNoInternet()
-                            } else {
-                                if (pd.isShowing) pd.dismiss()
-                                showInputDialog()
-                            }
+                            if (materialDialog.isShowing) materialDialog.dismiss()
+                            showInputDialog()
                         }
                     }
+                }
+                return@Thread
+            }
+
+            handler.post {
+                myPreference.setLaunched()
+                renderWeather(json!!)
+                if (!myPreference.getv3TargetShown()) showTargets()
+                if (materialDialog.isShowing) materialDialog.dismiss()
+                if (this.city == null) {
+                    myPreference.lastCity = json!!.daily.name + "," + json!!.daily.sys.country
                 } else {
-                    handler.post {
-                        prefs.setLaunched()
-                        renderWeather(json!!)
-                        if (!prefs.getv3TargetShown()) showTargets()
-                        if (pd.isShowing) pd.dismiss()
-                        if (citys == null) {
-                            prefs.lastCity = json!!.day.name + "," + json!!.day.sys.country
-                            (requireActivity() as WeatherActivity?)!!.createShortcuts()
-                            progress()
-                        } else prefs.lastCity = prefs.lastCity
-                        NotificationService.enqueueWork(
-                            requireContext(), Intent(requireContext(), WeatherActivity::class.java)
-                        )
-                    }
+                    myPreference.lastCity = myPreference.lastCity
                 }
             }
         }.start()
     }
 
-    private fun progress() {
-//        fabProgressCircle.onArcAnimationComplete();
-        handler.postDelayed({
-            //                fabProgressCircle.hide();
-        }, 500)
-    }
-
-    fun firstStart() {
-        if (pd.isShowing) pd.dismiss()
-        val intent = Intent(requireActivity(), FirstLaunch::class.java)
+    private fun firstStart() {
+        if (materialDialog.isShowing) materialDialog.dismiss()
+        val intent = Intent(requireActivity(), FirstLaunchActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
     }
 
-    val dailyJson: List<WeatherList>
+    val dailyJson: List<ForecastDay>
         get() = json!!.fort.list
 
     fun changeCity(city: String?) {
         updateWeatherData(city, null, null)
-        prefs.city = city
+        myPreference.city = city
     }
 
-    fun changeCity(lat: String?, lon: String?) {
-//        ((WeatherActivity) requireActivity()).showFab();
+    private fun changeCity(lat: String?, lon: String?) {
+        (requireActivity() as WeatherActivity).showFab()
         updateWeatherData(null, lat, lon)
     }
 
@@ -309,9 +298,13 @@ class WeatherFragment : Fragment() {
     }
 
     private fun showTargets() {
-        Handler().postDelayed({
+        handler.postDelayed({
             MaterialTapTargetPrompt.Builder(requireActivity()).setTarget(R.id.fab)
-                .setBackgroundColour(ContextCompat.getColor(requireContext(), R.color.md_light_blue_400))
+                .setBackgroundColour(
+                    ContextCompat.getColor(
+                        requireContext(), R.color.md_light_blue_400
+                    )
+                )
                 .setFocalColour(ContextCompat.getColor(requireContext(), R.color.colorAccent))
                 .setPrimaryText(getString(R.string.target_search_title))
                 .setSecondaryText(getString(R.string.target_search_content))
@@ -326,7 +319,8 @@ class WeatherFragment : Fragment() {
     }
 
     private fun showLocTarget() {
-        MaterialTapTargetPrompt.Builder(requireActivity()).setTarget(R.id.location)
+        MaterialTapTargetPrompt.Builder(requireActivity())
+            .setTarget(R.id.location)
             .setBackgroundColour(
                 ContextCompat.getColor(requireContext(), R.color.md_light_blue_400)
             )
@@ -334,9 +328,8 @@ class WeatherFragment : Fragment() {
             .setFocalColour(ContextCompat.getColor(requireContext(), R.color.colorAccent))
             .setSecondaryText(getString(R.string.target_location_content))
             .setPromptStateChangeListener { _, state ->
-                if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING) prefs.setv3TargetShown(
-                    true
-                )
+                if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING)
+                    myPreference.setv3TargetShown(true)
             }.show()
     }
 
@@ -344,18 +337,16 @@ class WeatherFragment : Fragment() {
         MaterialTapTargetPrompt.Builder(requireActivity()).setTarget(R.id.toolbar)
             .setBackgroundColour(
                 ContextCompat.getColor(
-                    requireContext(),
-                    R.color.md_light_blue_400
+                    requireContext(), R.color.md_light_blue_400
                 )
-            )
-            .setPrimaryText(getString(R.string.target_refresh_title))
+            ).setPrimaryText(getString(R.string.target_refresh_title))
             .setFocalColour(ContextCompat.getColor(requireContext(), R.color.colorAccent))
             .setSecondaryText(getString(R.string.target_refresh_content))
             .setPromptStateChangeListener { _, state -> if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING) showLocTarget() }
             .show()
     }
 
-    fun showNoInternet() {
+    private fun showNoInternet() {
         MaterialDialog(requireContext()).show {
             title(R.string.no_internet_title)
             message(R.string.no_internet_content)
@@ -379,9 +370,8 @@ class WeatherFragment : Fragment() {
     ) {
         when (requestCode) {
             Constants.READ_COARSE_LOCATION -> {
-
                 // If request is cancelled, the result arrays are empty.
-                if ((grantResults.size > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
+                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
                     showCity()
                 } else {
                     permission!!.permissionDenied()
@@ -392,8 +382,7 @@ class WeatherFragment : Fragment() {
 
     private fun showCity() {
         gps = GPSTracker(requireContext())
-        if (!gps!!.canGetLocation())
-            gps!!.showSettingsAlert()
+        if (!gps!!.canGetLocation) gps!!.showSettingsAlert()
         else {
             val lat = gps!!.getLatitude()
             val lon = gps!!.getLongitude()
@@ -402,41 +391,59 @@ class WeatherFragment : Fragment() {
     }
 
     @SuppressLint("SetTextI18n")
-    private fun renderWeather(jsonObj: Info) {
+    private fun renderWeather(jsonObj: DataResult) {
         try {
-            val json0 = jsonObj.day
-            val json1 = jsonObj.fort
-            tc = json0.main.temp
-            prefs.latitude = json1.city.coord.latitude.toFloat()
-            prefs.longitude = json1.city.coord.longitude.toFloat()
-            if (citys == null) prefs.city = json1.city.name + "," + json0!!.sys.country
-            val a = json0!!.main.temp.roundToInt()
-            val city = (json1.city.name.uppercase() + ", " + json1.city.country)
+            val daily = jsonObj.daily
+            val fort = jsonObj.fort
+            myPreference.latitude = fort.city.coord.latitude.toFloat()
+            myPreference.longitude = fort.city.coord.longitude.toFloat()
+            if (city == null) myPreference.city = fort.city.name + "," + daily.sys.country
+
+            val city = (fort.city.name.uppercase() + ", " + fort.city.country)
             binding.cityField.text = city
             binding.cityField.setOnClickListener { v -> Snack.make(v, city, Snackbar.LENGTH_SHORT) }
-            val details: MutableList<WeatherList> = json1.list
-            for (i in 0..9) {
-                details[i] = json1.list[i]
-            }
+
+            val details: List<ForecastDay> = fort.list
             val horizontalAdapter = HorizontalAdapter(details)
             horizontalRecyclerView.adapter = horizontalAdapter
-            val timeFormat24Hours = prefs.isTimeFormat24Hours
-            val d1 =
-                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.US).format(
-                    Date(json0.sys.sunrise * 1000)
+
+            val timeFormat24Hours = myPreference.isTimeFormat24Hours
+            binding.sunriseView.text =
+                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.CHINA).format(
+                    Date(daily.sys.sunrise * 1000)
                 )
-            val d2 =
-                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.US).format(
-                    Date(json0.sys.sunset * 1000)
+            binding.sunriseView.setOnClickListener {
+                Snack.make(
+                    rootView, "Sunrise at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
                 )
-            binding.sunriseView.text = d1
-            binding.sunsetView.text = d2
+            }
+            binding.sunriseIcon.setOnClickListener {
+                Snack.make(
+                    rootView, "Sunrise at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                )
+            }
+            binding.sunsetView.text =
+                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.CHINA).format(
+                    Date(daily.sys.sunset * 1000)
+                )
+            binding.sunsetView.setOnClickListener {
+                Snack.make(
+                    rootView, "Sunset at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                )
+            }
+            binding.sunsetIcon.setOnClickListener {
+                Snack.make(
+                    rootView, "Sunset at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                )
+            }
+
             val df = DateFormat.getDateTimeInstance()
-            val updatedOn = "Last update: " + df.format(Date(json0.dt * 1000))
+            val updatedOn = "Last update: " + df.format(Date(daily.dt * 1000L))
             binding.updatedField.text = updatedOn
-            val humidity = getString(R.string.humidity_, json0.main.humidity)
-            val humidity1 = getString(R.string.humidity, json0.main.humidity)
-            binding.humidityView.text = humidity
+
+
+            val humidity1 = getString(R.string.humidity, daily.main.getHumidityInt())
+            binding.humidityView.text = getString(R.string.humidity_, daily.main.getHumidityInt())
             binding.humidityIcon.setOnClickListener {
                 Snack.make(
                     rootView, humidity1, Snackbar.LENGTH_SHORT
@@ -447,9 +454,10 @@ class WeatherFragment : Fragment() {
                     rootView, humidity1, Snackbar.LENGTH_SHORT
                 )
             }
+
             val wind = getString(
                 R.string.wind,
-                json0.wind.speed,
+                daily.wind.speed,
                 if ((PreferenceManager.getDefaultSharedPreferences(requireContext()).getString(
                         Constants.PREF_TEMPERATURE_UNITS, Constants.METRIC
                     ) == Constants.METRIC)
@@ -457,50 +465,52 @@ class WeatherFragment : Fragment() {
             )
             val wind1 = getString(
                 R.string.wind_,
-                json0.wind.speed,
+                daily.wind.speed,
                 if ((PreferenceManager.getDefaultSharedPreferences(requireContext()).getString(
                         Constants.PREF_TEMPERATURE_UNITS, Constants.METRIC
                     ) == Constants.METRIC)
                 ) getString(R.string.mps) else getString(R.string.mph)
             )
             binding.windView.text = wind
-            binding.directionView.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(v: View) {
-                    Snack.make(rootView, wind1, Snackbar.LENGTH_SHORT)
-                }
-            })
-            binding.windView.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(v: View) {
-                    Snack.make(rootView, wind1, Snackbar.LENGTH_SHORT)
-                }
-            })
-            binding.weatherIcon11.text = Utils.setWeatherIcon(requireContext(), json0.weather.get(0).id)
-            binding.weatherIcon11.setOnClickListener(object : View.OnClickListener {
-                override fun onClick(v: View) {
-                    try {
-                        val rs = json0.weather[0].description
-                        val strArray = rs.split(" ").toTypedArray()
-                        val builder = StringBuilder()
-                        for (s: String in strArray) {
-                            val cap =
-                                s.substring(0, 1).uppercase(Locale.getDefault()) + s.substring(1)
-                            builder.append("$cap ")
-                        }
-                        Snack.make(
-                            v, getString(
-                                R.string.hey_there_condition,
-                                builder.toString().substring(0, builder.length - 1)
-                            ), Snackbar.LENGTH_SHORT
-                        )
-                    } catch (e: Exception) {
-                        e("Error", "Main Weather Icon OnClick Details could not be loaded")
+            binding.windView.setOnClickListener {
+                Snack.make(
+                    rootView, wind1, Snackbar.LENGTH_SHORT
+                )
+            }
+            binding.directionView.setOnClickListener {
+                Snack.make(
+                    rootView, wind1, Snackbar.LENGTH_SHORT
+                )
+            }
+
+            binding.weatherIcon11.text = Utils.setWeatherIcon(requireContext(), daily.weather.get(0).id)
+            binding.weatherIcon11.setOnClickListener { v ->
+                try {
+                    val rs = daily.weather[0].description
+                    val strArray = rs.split(" ").toTypedArray()
+                    val builder = StringBuilder()
+                    for (s: String in strArray) {
+                        val cap = s.substring(0, 1).uppercase(Locale.getDefault()) + s.substring(1)
+                        builder.append("$cap ")
                     }
+                    Snack.make(
+                        v, getString(
+                            R.string.hey_there_condition,
+                            builder.toString().substring(0, builder.length - 1)
+                        ), Snackbar.LENGTH_SHORT
+                    )
+                } catch (e: Exception) {
+                    Log.e("Error", "Main Weather Icon OnClick Details could not be loaded")
                 }
-            })
-            binding.button1.text = "$a${if (prefs.units == Constants.METRIC) "°C" else "°F"}"
-            setDeg(json0.wind.direction)
+            }
+
+            val a = json!!.daily.main.temp.roundToInt()
+            binding.iconButton.text =
+                "$a${if (myPreference.units == Constants.METRIC) "°C" else "°F"}"
+
+            setDeg(daily.wind.getDirectionInt())
         } catch (e: Exception) {
-            e(
+            Log.e(
                 WeatherFragment::class.java.simpleName,
                 "One or more fields not found in the JSON data"
             )
@@ -546,22 +556,22 @@ class WeatherFragment : Fragment() {
     }
 
     private fun setDirection(string: String) {
-        binding.directionView.setOnClickListener(object : View.OnClickListener {
-            override fun onClick(view: View) {
-                Snack.make(view, getString(R.string.wind_blowing_in, string), Snackbar.LENGTH_SHORT)
-            }
-        })
+        binding.directionView.setOnClickListener { view ->
+            Snack.make(
+                view, getString(R.string.wind_blowing_in, string), Snackbar.LENGTH_SHORT
+            )
+        }
     }
 
-    inner class HorizontalAdapter internal constructor(private val horizontalList: List<WeatherList>) :
+    inner class HorizontalAdapter internal constructor(private val horizontalList: List<ForecastDay>) :
         RecyclerView.Adapter<MyViewHolder>() {
         inner class MyViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            var weather_icon: TextView
-            var details_view: TextView
+            var weatherIcon: TextView
+            var detailsView: TextView
 
             init {
-                weather_icon = view.findViewById(R.id.weather_icon)
-                details_view = view.findViewById(R.id.details_view)
+                weatherIcon = view.findViewById(R.id.weather_icon)
+                detailsView = view.findViewById(R.id.details_view)
             }
         }
 
@@ -572,14 +582,19 @@ class WeatherFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-            holder.weather_icon.text =
-                Utils.setWeatherIcon(requireContext(), horizontalList.get(position).weather.get(0).id)
+            holder.weatherIcon.text = Utils.setWeatherIcon(
+                requireContext(), horizontalList[position].weather[0].id
+            )
             val date1 = horizontalList[position].dt
-            val expiry = Date(date1 * 1000)
-            val date = SimpleDateFormat("EE, dd", Locale(Prefs(requireContext()).language)).format(expiry)
-            val line2 = horizontalList[position].temp.max.toString() + (if (prefs.units == Constants.METRIC) "°C" else "°F") + "    "
-            val line3 = horizontalList[position].temp.min.toString() + (if (prefs.units == Constants.METRIC) "°C" else "°F")
-            val fs = date + "\n" + line2 + line3 + "\n"
+            val expiry = Date(date1 * 1000L)
+            val date = SimpleDateFormat("EE, dd", Locale(myPreference.language)).format(expiry)
+            val maxTemp = String.format(
+                "%.1f", horizontalList[position].temp.max
+            ) + (if (myPreference.units == Constants.METRIC) "°C" else "°F") + "    "
+            val minTemp = String.format(
+                "%.1f", horizontalList[position].temp.min
+            ) + (if (myPreference.units == Constants.METRIC) "°C" else "°F")
+            val fs = date + "\n" + maxTemp + minTemp + "\n"
             val ss1 = SpannableString(fs)
             ss1.setSpan(
                 RelativeSizeSpan(1.1f),
@@ -587,27 +602,29 @@ class WeatherFragment : Fragment() {
                 date.length,
                 Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             )
-            ss1.setSpan(RelativeSizeSpan(1.4f), fs.indexOf(line2), date.length + line2.length, 0)
-            holder.details_view.text = ss1
-            holder.details_view.setOnClickListener {
+            ss1.setSpan(
+                RelativeSizeSpan(1.4f), fs.indexOf(maxTemp), date.length + maxTemp.length, 0
+            )
+            holder.detailsView.text = ss1
+            holder.detailsView.setOnClickListener {
                 val bottomSheetDialogFragment = newInstance(horizontalList[position])
                 bottomSheetDialogFragment.show(
                     requireActivity().supportFragmentManager, bottomSheetDialogFragment.tag
                 )
             }
-            holder.weather_icon.setOnClickListener {
+            holder.weatherIcon.setOnClickListener {
                 val bottomSheetDialogFragment = newInstance(horizontalList[position])
                 bottomSheetDialogFragment.show(
                     requireActivity().supportFragmentManager, bottomSheetDialogFragment.tag
                 )
             }
-            holder.weather_icon.setTextColor(
+            holder.weatherIcon.setTextColor(
                 ContextCompat.getColor(
                     requireContext(), R.color.textColor
                 )
             )
-            holder.weather_icon.typeface = weatherFont
-            holder.details_view.setTextColor(
+            holder.weatherIcon.typeface = weatherFont
+            holder.detailsView.setTextColor(
                 ContextCompat.getColor(
                     requireContext(), R.color.textColor
                 )
@@ -620,12 +637,12 @@ class WeatherFragment : Fragment() {
     }
 
     override fun onResume() {
-        changeCity(prefs.city)
+        changeCity(myPreference.city)
         super.onResume()
     }
 
     companion object {
-        fun newInstance(describable: WeatherList?): CustomBottomSheetDialogFragment {
+        fun newInstance(describable: ForecastDay?): CustomBottomSheetDialogFragment {
             val fragment = CustomBottomSheetDialogFragment()
             val bundle = Bundle()
             bundle.putSerializable(Constants.DESCRIBABLE_KEY, describable)

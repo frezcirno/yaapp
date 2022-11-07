@@ -15,7 +15,6 @@ public class LanguageUtil {
 
     private static final String TAG = LanguageUtil.class.getSimpleName();
 
-    @TargetApi(17)
     @SuppressWarnings("deprecation")
     public static void setLanguage(final ContextWrapper contextWrapper, String locale) {
         Locale sLocale;
@@ -33,11 +32,7 @@ public class LanguageUtil {
         Resources resources = contextWrapper.getBaseContext().getResources();
         Configuration configuration = resources.getConfiguration();
         Locale.setDefault(sLocale);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            configuration.setLocale(sLocale);
-        } else {
-            configuration.locale = sLocale;
-        }
+        configuration.setLocale(sLocale);
 
         resources.updateConfiguration(configuration, resources.getDisplayMetrics());
     }

@@ -16,13 +16,12 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.frezcirno.weather.GlobalActivity;
+import com.frezcirno.weather.activity.GlobalActivity;
 import com.frezcirno.weather.R;
 import com.frezcirno.weather.activity.WeatherActivity;
-import com.frezcirno.weather.model.Log;
 import com.frezcirno.weather.permissions.GPSTracker;
 import com.frezcirno.weather.permissions.Permissions;
-import com.frezcirno.weather.preferences.Prefs;
+import com.frezcirno.weather.preferences.MyPreference;
 import com.frezcirno.weather.utils.Constants;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputLayout;
@@ -32,7 +31,7 @@ public class FirstLaunchFragment extends Fragment {
     View rootView;
     EditText cityInput;
     TextView message;
-    Prefs preferences;
+    MyPreference preferences;
     Permissions permission;
     GPSTracker gps;
 
@@ -40,19 +39,24 @@ public class FirstLaunchFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_first_launch, container, false);
-        preferences = new Prefs(getContext());
+
+        preferences = new MyPreference(getContext());
+
         cityInput = rootView.findViewById(R.id.city_input);
+
         TextInputLayout textField = rootView.findViewById(R.id.materialTextField);
         textField.setOnClickListener(v -> {
             permission = new Permissions(getContext());
             requestPermissions(new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, Constants.READ_COARSE_LOCATION);
         });
+
         message = rootView.findViewById(R.id.intro_text);
         if (GlobalActivity.i == 0) {
             message.setText(getString(R.string.pick_city));
         } else {
             message.setText(getString(R.string.uh_oh));
         }
+
         Button goButton = rootView.findViewById(R.id.go_button);
         goButton.setText(getString(android.R.string.ok));
         goButton.setOnClickListener(v -> {
@@ -64,6 +68,7 @@ public class FirstLaunchFragment extends Fragment {
                 Snackbar.make(rootView, getString(R.string.enter_city_first), Snackbar.LENGTH_SHORT).show();
             }
         });
+
         cityInput.setOnEditorActionListener((v, actionId, event) -> {
             if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
                 launchActivity(0);
@@ -76,12 +81,11 @@ public class FirstLaunchFragment extends Fragment {
 
     private void launchActivity(int mode) {
         preferences.setCity(cityInput.getText().toString());
+
         Intent intent = new Intent(getActivity(), WeatherActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("mode", mode);
-        Log.i("Loaded", "Weather");
         startActivity(intent);
-        Log.i("Changed", "City");
     }
 
     @Override
@@ -92,7 +96,7 @@ public class FirstLaunchFragment extends Fragment {
             if (grantResults.length > 0
                     && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 gps = new GPSTracker(getContext());
-                if (!gps.canGetLocation())
+                if (!gps.canGetLocation)
                     gps.showSettingsAlert();
                 else {
                     preferences.setLatitude(Float.parseFloat(gps.getLatitude()));

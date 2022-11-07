@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,13 +21,11 @@ import com.afollestad.materialdialogs.actions.getActionButton
 import com.afollestad.materialdialogs.input.input
 import com.afollestad.materialdialogs.list.listItemsMultiChoice
 import com.frezcirno.weather.R
-import com.frezcirno.weather.internet.FetchWeather
+import com.frezcirno.weather.utils.FetchWeather
 import com.frezcirno.weather.internet.isNetworkAvailable
-import com.frezcirno.weather.model.Log
-import com.frezcirno.weather.model.Snack
+import com.frezcirno.weather.utils.Snack
 import com.frezcirno.weather.preferences.DBHelper
-import com.frezcirno.weather.preferences.Prefs
-import com.frezcirno.weather.service.NotificationService
+import com.frezcirno.weather.preferences.MyPreference
 import com.frezcirno.weather.utils.Constants
 
 class SettingsActivity : AppCompatActivity() {
@@ -58,19 +57,12 @@ class SettingsActivity : AppCompatActivity() {
 
     class MySettingsFragment : PreferenceFragmentCompat() {
 
-        private lateinit var pref: Prefs
+        private lateinit var pref: MyPreference
 
         @SuppressLint("CheckResult")
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.pref_main)
-            pref = Prefs(requireContext())
-            findPreference<Preference>(Constants.PREF_ENABLE_NOTIFS)?.onPreferenceChangeListener =
-                OnPreferenceChangeListener { _, _ ->
-                    NotificationService.enqueueWork(
-                        activity, Intent(activity, WeatherActivity::class.java)
-                    )
-                    true
-                }
+            pref = MyPreference(requireContext())
             findPreference<Preference>(Constants.PREF_DISPLAY_LANGUAGE)?.onPreferenceChangeListener =
                 OnPreferenceChangeListener { _, _ ->
                     MaterialDialog(requireActivity()).show {
@@ -123,8 +115,10 @@ class SettingsActivity : AppCompatActivity() {
                             try {
                                 if (isNetworkAvailable(requireActivity()) && pref.weatherKey != input) {
                                     pref.weatherKey = input
-                                    val info = FetchWeather(activity).execute(pref.city).get()
-                                    if (info.day.cod != 200L) {
+                                    val info = FetchWeather(
+                                        activity
+                                    ).execute(pref.city).get()
+                                    if (info.daily.cod != 200) {
                                         MaterialDialog(requireActivity()).show {
                                             title(R.string.unable_fetch)
                                             message(R.string.unable_fetch_content)

@@ -5,8 +5,7 @@ import android.content.res.Configuration
 import android.os.Build
 import androidx.preference.PreferenceManager
 import com.frezcirno.weather.R
-import com.frezcirno.weather.model.Log.i
-import com.frezcirno.weather.preferences.Prefs
+import com.frezcirno.weather.preferences.MyPreference
 import com.frezcirno.weather.utils.LanguageUtil
 import java.util.*
 
@@ -20,13 +19,12 @@ class MyApplication : Application() {
         val lang = preferences.getString(getString(R.string.pref_language), "en")!!
         locale = Locale(lang)
         config.setLocale(locale)
-        i("Locale", lang)
         Locale.setDefault(locale)
         updateConfiguration(config)
         setSystemLocale(config, locale)
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) LanguageUtil.setLanguage(
             this,
-            Prefs(this).language
+            MyPreference(this).language
         )
     }
 

@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,10 +21,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.frezcirno.weather.R;
-import com.frezcirno.weather.activity.WeatherActivity;
-import com.frezcirno.weather.model.Log;
-import com.frezcirno.weather.model.WeatherFort;
-import com.frezcirno.weather.preferences.Prefs;
+import com.frezcirno.weather.model.ForecastDay;
+import com.frezcirno.weather.preferences.MyPreference;
 import com.frezcirno.weather.utils.Constants;
 import com.frezcirno.weather.utils.CustomFormatter;
 import com.frezcirno.weather.utils.XFormatter;
@@ -52,12 +51,12 @@ public class GraphsFragment extends Fragment {
             pressureEntries = new ArrayList<>() ,
             snowEntries = new ArrayList<>() ,
             windEntries = new ArrayList<>();
-    Prefs pf;
+    MyPreference pf;
     CustomFormatter mValueFormatter;
     String[] dates = new String[10];
     private Menu menu;
     int i = 0;
-    private ArrayList<WeatherFort.WeatherList> mDescribable;
+    private ArrayList<ForecastDay> mDescribable;
 
     public GraphsFragment() {
         handler = new Handler();
@@ -67,7 +66,7 @@ public class GraphsFragment extends Fragment {
     public void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mValueFormatter = new CustomFormatter();
-        pf = new Prefs(getContext());
+        pf = new MyPreference(getContext());
         setHasOptionsMenu(true);
     }
 
@@ -99,10 +98,8 @@ public class GraphsFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.toggle_values :
-                toggleValues();
-                break;
+        if (item.getItemId() == R.id.toggle_values) {
+            toggleValues();
         }
         return true;
     }
@@ -113,7 +110,7 @@ public class GraphsFragment extends Fragment {
         pressureChart = rootView.findViewById(R.id.pressure_chart);
         snowChart = rootView.findViewById(R.id.snow_chart);
         windChart = rootView.findViewById(R.id.wind_chart);
-        mDescribable = (ArrayList<WeatherFort.WeatherList>) getArguments().getSerializable(DESCRIBABLE_KEY);
+        mDescribable = (ArrayList<ForecastDay>) getArguments().getSerializable(DESCRIBABLE_KEY);
         function();
     }
 
@@ -429,36 +426,32 @@ public class GraphsFragment extends Fragment {
     }
 
     public void createEntries() {
-        ArrayList<WeatherFort.WeatherList> list;
         try {
-            list = mDescribable;
             for (int i = 0; i < 10; ++i) {
-                long day = list.get(i).getDt();
-                long temp = list.get(i).getTemp().getDay();
-                long pressure = (long) list.get(i).getPressure();
+                long day = mDescribable.get(i).getDt();
+                long temp = mDescribable.get(i).getTemp().getDayInt();
+                long pressure = (long) mDescribable.get(i).getPressure();
                 long rain;
                 try {
-                    rain = (long) list.get(i).getRain();
+                    rain = (long) mDescribable.get(i).getRain();
                 }
                 catch (Exception ex) {
                     rain = 0;
                 }
                 long snow;
                 try {
-                    snow = (long) list.get(i).getSnow();
+                    snow = (long) mDescribable.get(i).getSnow();
                 }
                 catch (Exception ex) {
                     snow = 0;
                 }
-                long wind = (long) list.get(i).getSpeed();
+                long wind = (long) mDescribable.get(i).getSpeed();
                 tempEntries.add(new Entry(i , temp));
                 rainEntries.add(new Entry(i , rain));
                 pressureEntries.add(new Entry(i , pressure));
                 snowEntries.add(new Entry(i , snow));
                 windEntries.add(new Entry(i , wind));
-                Log.i("Added" , "Entry : " + i + " " + temp);
                 dates[i] = getDay(day);
-                Log.i("Added" , "Day : " + dates[i]);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -470,6 +463,6 @@ public class GraphsFragment extends Fragment {
         dt *= 1000;
         Calendar c = Calendar.getInstance();
         c.setTime(new Date(dt));
-        return c.getDisplayName(Calendar.DAY_OF_WEEK , Calendar.SHORT , new Locale(new Prefs(getActivity()).getLanguage()));
+        return c.getDisplayName(Calendar.DAY_OF_WEEK , Calendar.SHORT , new Locale(new MyPreference(getActivity()).getLanguage()));
     }
 }

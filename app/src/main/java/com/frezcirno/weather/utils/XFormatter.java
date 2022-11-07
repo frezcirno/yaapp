@@ -5,7 +5,7 @@ import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 
 public class XFormatter implements IAxisValueFormatter {
 
-    private String[] dates;
+    private final String[] dates;
 
     public XFormatter(String[] dates) {
         this.dates = dates;

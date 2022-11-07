@@ -1,5 +1,6 @@
-package com.frezcirno.weather.model;
+package com.frezcirno.weather.utils;
 
+import android.util.Log;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 
@@ -24,7 +25,7 @@ public class Snack {
             mIsEnabledField.setBoolean(accessibilityManager, false);
             mAccessibilityManagerField.set(snackbar, accessibilityManager);
         } catch (Exception e) {
-            Log.d("Snackbar", "Reflection error: " + e.toString());
+            Log.d("Snackbar", "Reflection error: " + e);
         }
         snackbar.show();
     }
