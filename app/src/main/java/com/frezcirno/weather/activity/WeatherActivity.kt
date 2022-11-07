@@ -49,7 +49,7 @@ class WeatherActivity : AppCompatActivity() {
     var wf: WeatherFragment? = null
     var drawer: Drawer? = null
     var jsonInfo: DataResult? = null
-    var i = 5
+    var i = 4
 
     override fun attachBaseContext(newBase: Context) {
         val context: Context = MyContextWrapper.wrap(newBase, MyPreference(newBase).language)
@@ -183,14 +183,20 @@ class WeatherActivity : AppCompatActivity() {
     }
 
     private fun changeCity(city: String) {
-        val weatherFragment =
-            supportFragmentManager.findFragmentById(R.id.fragment) as WeatherFragment
-        weatherFragment.changeCity(city)
+        try {
+            val weatherFragment =
+                supportFragmentManager.findFragmentById(R.id.fragment) as WeatherFragment
+            weatherFragment.changeCity(city)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun initDrawer() {
-        val profile: IProfile<*> = ProfileDrawerItem().withName(getString(R.string.app_name))
-            .withEmail("Version : " + BuildConfig.VERSION_NAME).withIcon(R.mipmap.ic_launcher_x)
+        val profile: IProfile<*> = ProfileDrawerItem()
+            .withName(getString(R.string.app_name))
+            .withEmail("作者： Tan Zixuan - 22251112")
+            .withIcon(R.mipmap.ic_launcher_x)
 
         val headerResult =
             AccountHeaderBuilder().withActivity(this).withHeaderBackground(R.drawable.header)

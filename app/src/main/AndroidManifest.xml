@@ -14,9 +14,9 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@drawable/shortcut_home"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@drawable/shortcut_home"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar"
         tools:targetApi="31" >
@@ -38,7 +38,7 @@
         <activity
             android:name=".activity.FirstLaunchActivity"
             android:configChanges="locale"
-            android:label="Enter City"
+            android:label="@string/enter_city"
             android:screenOrientation="portrait"
             android:resizeableActivity="false"
              />

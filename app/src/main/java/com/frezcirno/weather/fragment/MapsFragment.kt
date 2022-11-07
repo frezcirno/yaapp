@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.fragment.app.Fragment
 import com.frezcirno.weather.R
+import com.frezcirno.weather.activity.WeatherActivity
 import com.frezcirno.weather.preferences.MyPreference
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
@@ -26,7 +27,7 @@ class MapsFragment : Fragment() {
         rootView = inflater.inflate(R.layout.fragment_maps, container, false)
         webView = rootView.findViewById(R.id.webView)
         myPreference = MyPreference(requireContext())
-        //        ((WeatherActivity) getActivity()).hideFab();
+        (activity as WeatherActivity).hideFab()
         loadMap()
         return rootView
     }

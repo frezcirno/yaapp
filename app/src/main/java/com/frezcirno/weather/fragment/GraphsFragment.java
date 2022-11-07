@@ -21,6 +21,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
 import com.frezcirno.weather.R;
+import com.frezcirno.weather.activity.WeatherActivity;
 import com.frezcirno.weather.model.ForecastDay;
 import com.frezcirno.weather.preferences.MyPreference;
 import com.frezcirno.weather.utils.Constants;
@@ -45,17 +46,17 @@ public class GraphsFragment extends Fragment {
 
     View rootView;
     Handler handler;
-    LineChart temperatureChart , rainChart, pressureChart, snowChart, windChart;
-    List<Entry> tempEntries = new ArrayList<>() ,
-            rainEntries = new ArrayList<>() ,
-            pressureEntries = new ArrayList<>() ,
-            snowEntries = new ArrayList<>() ,
+    LineChart temperatureChart, rainChart, pressureChart, snowChart, windChart;
+    List<Entry> tempEntries = new ArrayList<>(),
+            rainEntries = new ArrayList<>(),
+            pressureEntries = new ArrayList<>(),
+            snowEntries = new ArrayList<>(),
             windEntries = new ArrayList<>();
     MyPreference pf;
     CustomFormatter mValueFormatter;
     String[] dates = new String[10];
-    private Menu menu;
     int i = 0;
+    private Menu menu;
     private ArrayList<ForecastDay> mDescribable;
 
     public GraphsFragment() {
@@ -63,7 +64,7 @@ public class GraphsFragment extends Fragment {
     }
 
     @Override
-    public void onCreate (Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mValueFormatter = new CustomFormatter();
         pf = new MyPreference(getContext());
@@ -75,9 +76,9 @@ public class GraphsFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         rootView = inflater.inflate(R.layout.fragment_graphs, container, false);
-        Log.i("Loaded" , "Fragment");
+        Log.i("Loaded", "Fragment");
         startTask();
-//        ((WeatherActivity) activity()).hideFab();
+        ((WeatherActivity) activity()).hideFab();
         return rootView;
     }
 
@@ -90,10 +91,10 @@ public class GraphsFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(Menu menu , MenuInflater inflater) {
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         activity().getMenuInflater().inflate(R.menu.menu_graph, menu);
         this.menu = menu;
-        this.menu.getItem(0).setIcon(ContextCompat.getDrawable(context() , R.drawable.ic_radio_button_unchecked_white_24dp));
+        this.menu.getItem(0).setIcon(ContextCompat.getDrawable(context(), R.drawable.ic_radio_button_unchecked_white_24dp));
     }
 
     @Override
@@ -121,11 +122,10 @@ public class GraphsFragment extends Fragment {
 
     public void toggleValues() {
         if (i == 1) {
-            menu.getItem(0).setIcon(ContextCompat.getDrawable(context() , R.drawable.ic_radio_button_unchecked_white_24dp));
+            menu.getItem(0).setIcon(ContextCompat.getDrawable(context(), R.drawable.ic_radio_button_unchecked_white_24dp));
             i = 0;
-        }
-        else {
-            menu.getItem(0).setIcon(ContextCompat.getDrawable(context() , R.drawable.ic_radio_button_checked_white_24dp));
+        } else {
+            menu.getItem(0).setIcon(ContextCompat.getDrawable(context(), R.drawable.ic_radio_button_checked_white_24dp));
             i = 1;
         }
         for (IDataSet set : temperatureChart.getData().getDataSets()) {
@@ -175,7 +175,7 @@ public class GraphsFragment extends Fragment {
         temperatureChart.setDragEnabled(true);
         temperatureChart.setMaxHighlightDistance(300);
         temperatureChart.setPinchZoom(true);
-        temperatureChart.setPadding(2 , 2 , 2 , 2);
+        temperatureChart.setPadding(2, 2, 2, 2);
         temperatureChart.getLegend().setEnabled(true);
         temperatureChart.getLegend().setTextColor(Color.WHITE);
 
@@ -184,7 +184,7 @@ public class GraphsFragment extends Fragment {
         yAxisRight.setDrawAxisLine(false);
         yAxisRight.setDrawLabels(false);
         yAxisRight.setTextColor(Color.WHITE);
-        yAxisRight.enableAxisLineDashedLine(2f , 4f , 2f);
+        yAxisRight.enableAxisLineDashedLine(2f, 4f, 2f);
 
         YAxis yAxisLeft = temperatureChart.getAxisLeft();
         yAxisLeft.setTextColor(Color.WHITE);
@@ -202,7 +202,7 @@ public class GraphsFragment extends Fragment {
                     temperatureChart.getData().getDataSetCount() - 1));
             temperatureChart.getLegend().setTextColor(Color.parseColor("#FFFFFF"));
         }
-        String temp = getString(R.string.pref_temp_header) + ", " + (PreferenceManager.getDefaultSharedPreferences(getContext()).getString(Constants.PREF_TEMPERATURE_UNITS , Constants.METRIC).equals(Constants.METRIC) ? getString(R.string.c) : getString(R.string.f));
+        String temp = getString(R.string.pref_temp_header) + ", " + (PreferenceManager.getDefaultSharedPreferences(getContext()).getString(Constants.PREF_TEMPERATURE_UNITS, Constants.METRIC).equals(Constants.METRIC) ? getString(R.string.c) : getString(R.string.f));
         set = new LineDataSet(tempEntries, temp);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         set.setCubicIntensity(0.2f);
@@ -227,7 +227,7 @@ public class GraphsFragment extends Fragment {
         rainChart.setDragEnabled(true);
         rainChart.setMaxHighlightDistance(300);
         rainChart.setPinchZoom(true);
-        rainChart.setPadding(2 , 2 , 2 , 2);
+        rainChart.setPadding(2, 2, 2, 2);
         rainChart.getLegend().setEnabled(true);
         rainChart.getLegend().setTextColor(Color.WHITE);
 
@@ -236,7 +236,7 @@ public class GraphsFragment extends Fragment {
         yAxisRight.setDrawAxisLine(false);
         yAxisRight.setDrawLabels(false);
         yAxisRight.setTextColor(Color.WHITE);
-        yAxisRight.enableAxisLineDashedLine(2f , 4f , 2f);
+        yAxisRight.enableAxisLineDashedLine(2f, 4f, 2f);
 
         YAxis yAxisLeft = rainChart.getAxisLeft();
         yAxisLeft.setTextColor(Color.WHITE);
@@ -254,7 +254,7 @@ public class GraphsFragment extends Fragment {
                     rainChart.getData().getDataSetCount() - 1));
             rainChart.getLegend().setTextColor(Color.parseColor("#FFFFFF"));
         }
-        set = new LineDataSet(rainEntries, getString(R.string.bottom_rain) + "," + getString(R.string.mm));
+        set = new LineDataSet(rainEntries, getString(R.string.bottom_rain) + ", " + getString(R.string.mm));
         set.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
         set.setCubicIntensity(0.2f);
         set.setDrawCircles(false);
@@ -278,7 +278,7 @@ public class GraphsFragment extends Fragment {
         pressureChart.setDragEnabled(true);
         pressureChart.setMaxHighlightDistance(300);
         pressureChart.setPinchZoom(true);
-        pressureChart.setPadding(2 , 2 , 2 , 2);
+        pressureChart.setPadding(2, 2, 2, 2);
         pressureChart.getLegend().setEnabled(true);
         pressureChart.getLegend().setTextColor(Color.WHITE);
 
@@ -287,7 +287,7 @@ public class GraphsFragment extends Fragment {
         yAxisRight.setDrawAxisLine(false);
         yAxisRight.setDrawLabels(false);
         yAxisRight.setTextColor(Color.WHITE);
-        yAxisRight.enableAxisLineDashedLine(2f , 4f , 2f);
+        yAxisRight.enableAxisLineDashedLine(2f, 4f, 2f);
 
         YAxis yAxisLeft = pressureChart.getAxisLeft();
         yAxisLeft.setTextColor(Color.WHITE);
@@ -329,7 +329,7 @@ public class GraphsFragment extends Fragment {
         snowChart.setDragEnabled(true);
         snowChart.setMaxHighlightDistance(300);
         snowChart.setPinchZoom(true);
-        snowChart.setPadding(2 , 2 , 2 , 2);
+        snowChart.setPadding(2, 2, 2, 2);
         snowChart.getLegend().setEnabled(true);
         snowChart.getLegend().setTextColor(Color.WHITE);
 
@@ -338,7 +338,7 @@ public class GraphsFragment extends Fragment {
         yAxisRight.setDrawAxisLine(false);
         yAxisRight.setDrawLabels(false);
         yAxisRight.setTextColor(Color.WHITE);
-        yAxisRight.enableAxisLineDashedLine(2f , 4f , 2f);
+        yAxisRight.enableAxisLineDashedLine(2f, 4f, 2f);
 
         YAxis yAxisLeft = snowChart.getAxisLeft();
         yAxisLeft.setTextColor(Color.WHITE);
@@ -380,7 +380,7 @@ public class GraphsFragment extends Fragment {
         windChart.setDragEnabled(true);
         windChart.setMaxHighlightDistance(300);
         windChart.setPinchZoom(true);
-        windChart.setPadding(2 , 2 , 2 , 2);
+        windChart.setPadding(2, 2, 2, 2);
         windChart.getLegend().setEnabled(true);
         windChart.getLegend().setTextColor(Color.WHITE);
 
@@ -389,7 +389,7 @@ public class GraphsFragment extends Fragment {
         yAxisRight.setDrawAxisLine(false);
         yAxisRight.setDrawLabels(false);
         yAxisRight.setTextColor(Color.WHITE);
-        yAxisRight.enableAxisLineDashedLine(2f , 4f , 2f);
+        yAxisRight.enableAxisLineDashedLine(2f, 4f, 2f);
 
         YAxis yAxisLeft = windChart.getAxisLeft();
         yAxisLeft.setTextColor(Color.WHITE);
@@ -407,7 +407,7 @@ public class GraphsFragment extends Fragment {
                     windChart.getData().getDataSetCount() - 1));
             windChart.getLegend().setTextColor(Color.parseColor("#FFFFFF"));
         }
-        String wind = getString(R.string.bottom_wind) + ", " + (PreferenceManager.getDefaultSharedPreferences(getContext()).getString(Constants.PREF_TEMPERATURE_UNITS , Constants.METRIC).equals(Constants.METRIC) ? getString(R.string.mps) : getString(R.string.mph));
+        String wind = getString(R.string.bottom_wind) + ", " + (PreferenceManager.getDefaultSharedPreferences(getContext()).getString(Constants.PREF_TEMPERATURE_UNITS, Constants.METRIC).equals(Constants.METRIC) ? getString(R.string.mps) : getString(R.string.mph));
         set = new LineDataSet(windEntries, wind);
         set.setMode(LineDataSet.Mode.HORIZONTAL_BEZIER);
         set.setCubicIntensity(0.2f);
@@ -430,32 +430,30 @@ public class GraphsFragment extends Fragment {
             for (int i = 0; i < 10; ++i) {
                 long day = mDescribable.get(i).getDt();
                 long temp = mDescribable.get(i).getTemp().getDayInt();
-                long pressure = (long) mDescribable.get(i).getPressure();
+                long pressure = mDescribable.get(i).getPressure();
                 long rain;
                 try {
                     rain = (long) mDescribable.get(i).getRain();
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     rain = 0;
                 }
                 long snow;
                 try {
                     snow = (long) mDescribable.get(i).getSnow();
-                }
-                catch (Exception ex) {
+                } catch (Exception ex) {
                     snow = 0;
                 }
                 long wind = (long) mDescribable.get(i).getSpeed();
-                tempEntries.add(new Entry(i , temp));
-                rainEntries.add(new Entry(i , rain));
-                pressureEntries.add(new Entry(i , pressure));
-                snowEntries.add(new Entry(i , snow));
-                windEntries.add(new Entry(i , wind));
+                tempEntries.add(new Entry(i, temp));
+                rainEntries.add(new Entry(i, rain));
+                pressureEntries.add(new Entry(i, pressure));
+                snowEntries.add(new Entry(i, snow));
+                windEntries.add(new Entry(i, wind));
                 dates[i] = getDay(day);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            Log.i("Caught" , "JSON Ex");
+            Log.i("Caught", "JSON Ex");
         }
     }
 
@@ -463,6 +461,6 @@ public class GraphsFragment extends Fragment {
         dt *= 1000;
         Calendar c = Calendar.getInstance();
         c.setTime(new Date(dt));
-        return c.getDisplayName(Calendar.DAY_OF_WEEK , Calendar.SHORT , new Locale(new MyPreference(getActivity()).getLanguage()));
+        return c.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.SHORT, new Locale(new MyPreference(getActivity()).getLanguage()));
     }
 }

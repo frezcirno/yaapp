@@ -77,11 +77,6 @@ class WeatherFragment : Fragment() {
         rootView = binding.root
         handler = Handler(getMainLooper())
 
-        materialDialog =
-            MaterialDialog(requireContext()).title(R.string.please_wait).message(R.string.loading)
-                .cancelable(false).cancelOnTouchOutside(false)
-//            .progress()
-
         setHasOptionsMenu(true)
 
         myPreference = MyPreference(requireContext())
@@ -165,7 +160,13 @@ class WeatherFragment : Fragment() {
         binding.sunsetView.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
 
         binding.iconButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.textColor))
+
+        materialDialog =
+            MaterialDialog(requireContext()).title(R.string.please_wait).message(R.string.loading)
+                .cancelable(false).cancelOnTouchOutside(false)
+//            .progress()
         materialDialog.show()
+
         horizontalRecyclerView.setBackgroundColor(resources.getColor(R.color.colorPrimary))
         binding.weatherIcon11.typeface = weatherFont
         binding.weatherIcon11.setTextColor(
@@ -414,12 +415,12 @@ class WeatherFragment : Fragment() {
                 )
             binding.sunriseView.setOnClickListener {
                 Snack.make(
-                    rootView, "Sunrise at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                    rootView, "日出时间：" + binding.sunriseView.text, Snackbar.LENGTH_SHORT
                 )
             }
             binding.sunriseIcon.setOnClickListener {
                 Snack.make(
-                    rootView, "Sunrise at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                    rootView, "日出时间：" + binding.sunriseView.text, Snackbar.LENGTH_SHORT
                 )
             }
             binding.sunsetView.text =
@@ -428,17 +429,17 @@ class WeatherFragment : Fragment() {
                 )
             binding.sunsetView.setOnClickListener {
                 Snack.make(
-                    rootView, "Sunset at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                    rootView, "日落时间：" + binding.sunriseView.text, Snackbar.LENGTH_SHORT
                 )
             }
             binding.sunsetIcon.setOnClickListener {
                 Snack.make(
-                    rootView, "Sunset at " + binding.sunriseView.text, Snackbar.LENGTH_SHORT
+                    rootView, "日落时间：" + binding.sunriseView.text, Snackbar.LENGTH_SHORT
                 )
             }
 
             val df = DateFormat.getDateTimeInstance()
-            val updatedOn = "Last update: " + df.format(Date(daily.dt * 1000L))
+            val updatedOn = "上次更新: " + df.format(Date(daily.dt * 1000L))
             binding.updatedField.text = updatedOn
 
 
