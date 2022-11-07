@@ -11,7 +11,7 @@
 
     <string name="uh_oh">你输入的城市不存在于数据库中。请再试一次</string>
     <string name="pick_city">请先选择一个城市以开始使用</string>
-    <string name="hey_there_condition">当前区域在 %s</string>
+    <string name="hey_there_condition">当前区域的天气：%s</string>
 
     <string name="snow_">降雪 : %1$.2f %2$s</string>
     <string name="humidity">湿度 : %d %%</string>
