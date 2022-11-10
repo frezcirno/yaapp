@@ -21,7 +21,7 @@ public class Constants {
 
     public static final String NOTIFICATIONS = "notifs";
 
-    public static final String V3TUTORIAL = "tut-v3-shown";
+    public static final String TUTORIAL = "tutorial-shown";
 
     public static final int READ_COARSE_LOCATION = 20;
     public static final int WRITE_EXTERNAL_STORAGE = 21;

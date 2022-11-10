@@ -1,6 +1,5 @@
 package com.frezcirno.weather.preferences
 
-import android.app.AlarmManager
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
@@ -26,6 +25,7 @@ class MyPreference(context: Context) {
     fun setLaunched() {
         sharedPreferences.edit().putBoolean(Constants.FIRST, true).apply()
     }
+
     val launched: Boolean
         get() = sharedPreferences.getBoolean(Constants.FIRST, false)
     val language: String
@@ -51,13 +51,11 @@ class MyPreference(context: Context) {
             sharedPreferences.edit().putString(Constants.UNITS, string).apply()
         }
 
-    fun setv3TargetShown(bool: Boolean) {
-        sharedPreferences.edit().putBoolean(Constants.V3TUTORIAL, bool).apply()
-    }
-
-    fun getv3TargetShown(): Boolean {
-        return sharedPreferences.getBoolean(Constants.V3TUTORIAL, false)
-    }
+    var tutorialShown: Boolean
+        get() = sharedPreferences.getBoolean(Constants.TUTORIAL, false)
+        set(bool) {
+            sharedPreferences.edit().putBoolean(Constants.TUTORIAL, bool).apply()
+        }
 
     var weatherKey: String?
         get() = sharedPreferences.getString(Constants.PREF_OWM_KEY, Constants.OWM_APP_ID)

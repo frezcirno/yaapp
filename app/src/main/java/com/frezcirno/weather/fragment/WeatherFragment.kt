@@ -82,6 +82,8 @@ class WeatherFragment : Fragment() {
         myPreference = MyPreference(requireContext())
         weatherFont = Typeface.createFromAsset(requireContext().assets, "fonts/weather.ttf")
 
+        if (!myPreference.tutorialShown) showSearchTutorial()
+
         val mode = arguments?.getInt(Constants.MODE)
         if (mode == 0) {
             updateWeatherData(myPreference.city, null, null)
@@ -252,7 +254,6 @@ class WeatherFragment : Fragment() {
             handler.post {
                 myPreference.setLaunched()
                 renderWeather(json!!)
-                if (!myPreference.getv3TargetShown()) showTargets()
                 if (materialDialog.isShowing) materialDialog.dismiss()
                 if (this.city == null) {
                     myPreference.lastCity = json!!.daily.name + "," + json!!.daily.sys.country
@@ -298,9 +299,10 @@ class WeatherFragment : Fragment() {
         }
     }
 
-    private fun showTargets() {
+    private fun showSearchTutorial() {
         handler.postDelayed({
-            MaterialTapTargetPrompt.Builder(requireActivity()).setTarget(R.id.fab)
+            MaterialTapTargetPrompt.Builder(requireActivity())
+                .setTarget(R.id.fab)
                 .setBackgroundColour(
                     ContextCompat.getColor(
                         requireContext(), R.color.md_light_blue_400
@@ -314,12 +316,17 @@ class WeatherFragment : Fragment() {
                         requireContext(), R.color.md_black_1000
                     )
                 )
-                .setPromptStateChangeListener { prompt, state -> if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING) showRefresh() }
+                .setPromptStateChangeListener { _, state ->
+                    if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED ||
+                        state == MaterialTapTargetPrompt.STATE_NON_FOCAL_PRESSED ||
+                        state == MaterialTapTargetPrompt.STATE_DISMISSING)
+                        showRefreshTutorial()
+                }
                 .show()
         }, 4500)
     }
 
-    private fun showLocTarget() {
+    private fun showLocTutorial() {
         MaterialTapTargetPrompt.Builder(requireActivity())
             .setTarget(R.id.location)
             .setBackgroundColour(
@@ -329,21 +336,30 @@ class WeatherFragment : Fragment() {
             .setFocalColour(ContextCompat.getColor(requireContext(), R.color.colorAccent))
             .setSecondaryText(getString(R.string.target_location_content))
             .setPromptStateChangeListener { _, state ->
-                if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING)
-                    myPreference.setv3TargetShown(true)
+                if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED ||
+                    state == MaterialTapTargetPrompt.STATE_NON_FOCAL_PRESSED ||
+                    state == MaterialTapTargetPrompt.STATE_DISMISSING)
+                    myPreference.tutorialShown = true
             }.show()
     }
 
-    private fun showRefresh() {
-        MaterialTapTargetPrompt.Builder(requireActivity()).setTarget(R.id.toolbar)
+    private fun showRefreshTutorial() {
+        MaterialTapTargetPrompt.Builder(requireActivity())
+            .setTarget(R.id.toolbar)
             .setBackgroundColour(
                 ContextCompat.getColor(
                     requireContext(), R.color.md_light_blue_400
                 )
-            ).setPrimaryText(getString(R.string.target_refresh_title))
+            )
+            .setPrimaryText(getString(R.string.target_refresh_title))
             .setFocalColour(ContextCompat.getColor(requireContext(), R.color.colorAccent))
             .setSecondaryText(getString(R.string.target_refresh_content))
-            .setPromptStateChangeListener { _, state -> if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED || state == MaterialTapTargetPrompt.STATE_DISMISSING) showLocTarget() }
+            .setPromptStateChangeListener { _, state ->
+                if (state == MaterialTapTargetPrompt.STATE_FOCAL_PRESSED ||
+                    state == MaterialTapTargetPrompt.STATE_NON_FOCAL_PRESSED ||
+                    state == MaterialTapTargetPrompt.STATE_DISMISSING)
+                    showLocTutorial()
+            }
             .show()
     }
 
@@ -410,7 +426,10 @@ class WeatherFragment : Fragment() {
 
             val timeFormat24Hours = myPreference.isTimeFormat24Hours
             binding.sunriseView.text =
-                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.CHINA).format(
+                SimpleDateFormat(
+                    if (timeFormat24Hours) "kk:mm" else "hh:mm a",
+                    Locale.CHINA
+                ).format(
                     Date(daily.sys.sunrise * 1000)
                 )
             binding.sunriseView.setOnClickListener {
@@ -424,7 +443,10 @@ class WeatherFragment : Fragment() {
                 )
             }
             binding.sunsetView.text =
-                SimpleDateFormat(if (timeFormat24Hours) "kk:mm" else "hh:mm a", Locale.CHINA).format(
+                SimpleDateFormat(
+                    if (timeFormat24Hours) "kk:mm" else "hh:mm a",
+                    Locale.CHINA
+                ).format(
                     Date(daily.sys.sunset * 1000)
                 )
             binding.sunsetView.setOnClickListener {
@@ -484,7 +506,8 @@ class WeatherFragment : Fragment() {
                 )
             }
 
-            binding.weatherIcon11.text = Utils.setWeatherIcon(requireContext(), daily.weather.get(0).id)
+            binding.weatherIcon11.text =
+                Utils.setWeatherIcon(requireContext(), daily.weather.get(0).id)
             binding.weatherIcon11.setOnClickListener { v ->
                 try {
                     val rs = daily.weather[0].description

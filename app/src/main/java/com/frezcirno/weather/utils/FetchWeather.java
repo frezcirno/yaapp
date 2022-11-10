@@ -45,7 +45,6 @@ public class FetchWeather extends AsyncTask<String, Void, DataResult> {
             dataResult.daily = getWeather();
             dataResult.fort = getFort();
 
-            // This value will be 404 if the request was not successful
             if (dataResult.daily.getCod() != 200 | dataResult.fort.getCod() != 200) {
                 Log.e(LOG_TAG, "Execution Failed");
                 return null;

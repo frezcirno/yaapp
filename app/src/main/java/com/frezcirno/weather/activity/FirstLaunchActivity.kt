@@ -20,11 +20,11 @@ class FirstLaunchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_first_launch)
 
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar(toolbar)
+
         supportFragmentManager.beginTransaction()
             .add(R.id.fragment, FirstLaunchFragment())
             .commit()
-
-        val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
-        setSupportActionBar(toolbar)
     }
 }
